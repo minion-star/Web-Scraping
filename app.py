@@ -75,7 +75,40 @@ def get_category_books(category_url, category_name, page_number=1):
 
     return books_data
 
+@app.route('/scrape', methods=['GET'])
+def scrape_books():
+    # Scrape the main page to get the category URLs
+    response = requests.get(BASE_URL)
+    if response.status_code != 200:
+        return jsonify({"error": f"An error occurred with status {response.status_code}"}), 500
 
+    # Parse the main page content
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Find all the category links on the main page
+    categories = soup.find_all("a", href=re.compile(r"^catalogue/category/books/"))
+    categories_data = []
+
+    # Scrape books for each category
+    for category in categories:
+        category_name = category.text.strip()
+        category_url = BASE_URL + category["href"].replace("../../", "")
+        
+        # Scrape the books for each category
+        books_data = get_category_books(category_url, category_name)
+        
+        # Append the category and books to the result list
+        categories_data.append({
+            "Category": category_name,
+            "Books": books_data
+        })
+
+    # Now, let's convert ObjectId to string for books in MongoDB
+    books_data_from_db = list(collection.find({}))
+    books_data_from_db = convert_objectid(books_data_from_db)
+
+    # Return the scraped data as JSON response
+    return jsonify(books_data_from_db)
 
 if __name__ == '__main__':
     app.run(debug=True)
