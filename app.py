@@ -1,10 +1,4 @@
-from flask import Flask, jsonify, request
-import requests
-from bs4 import BeautifulSoup
-from pymongo import MongoClient
-import re
-from flask_cors import CORS
-from bson import ObjectId
+
 
 app = Flask(__name__)
 CORS(app)
